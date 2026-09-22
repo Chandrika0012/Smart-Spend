@@ -42,24 +42,80 @@ def category_summary(tx):
 @app.route("/", methods=["GET", "POST"])
 def dashboard():
     customers, transactions = load_data()
+# ==========================================================
+    # NEW CUSTOMER OPTION
+    # ==========================================================
 
-    selected_id = request.form.get("customer_id", request.args.get("customer_id", "1"))
-    try:
-        selected_id = int(selected_id)
-    except ValueError:
-        selected_id = 1
+    is_new_customer = request.form.get("action") == "new_customer"
 
-    customer_row = customers[customers["customer_id"] == selected_id]
-    if customer_row.empty:
-        selected_id = int(customers.iloc[0]["customer_id"])
-        customer_row = customers.iloc[[0]]
+    if is_new_customer:
 
-    customer = customer_row.iloc[0]
-    income = float(customer["income"])
+        # Get details entered by ma'am
+        name = request.form.get("name", "").strip()
+        age = int(request.form.get("age", 0))
+        occupation = request.form.get("occupation", "").strip()
+        income = float(request.form.get("income", 0))
 
-    # Optional user-added transaction (kept in memory for the current page)
-    tx = transactions[transactions["customer_id"] == selected_id].copy()
+        # Create temporary customer
+        customer = {
+            "customer_id": "NEW",
+            "name": name,
+            "age": age,
+            "occupation": occupation,
+            "income": income
+        }
 
+        selected_id = "NEW"
+
+        # Use the existing dataset's transaction pattern
+        # as a sample for the new customer.
+        base_customer = customers.iloc[0]
+        base_id = base_customer["customer_id"]
+        base_income = float(base_customer["income"])
+
+        tx = transactions[
+            transactions["customer_id"] == base_id
+        ].copy()
+
+        # Scale transactions according to new income
+        if not tx.empty and base_income > 0:
+            scale = income / base_income
+            tx["amount"] = tx["amount"] * scale
+
+        tx["customer_id"] = "NEW"
+
+    else:
+
+        # ======================================================
+        # EXISTING CUSTOMER CODE — KEEPING YOUR ORIGINAL LOGIC
+        # ======================================================
+
+        selected_id = request.form.get(
+            "customer_id",
+            request.args.get("customer_id", "1")
+        )
+
+        try:
+            selected_id = int(selected_id)
+        except ValueError:
+            selected_id = 1
+
+        customer_row = customers[
+            customers["customer_id"] == selected_id
+        ]
+
+        if customer_row.empty:
+            selected_id = int(customers.iloc[0]["customer_id"])
+            customer_row = customers.iloc[[0]]
+
+        customer = customer_row.iloc[0]
+        income = float(customer["income"])
+
+        # Existing customer's actual transactions
+        tx = transactions[
+            transactions["customer_id"] == selected_id
+        ].copy()
+    
     if request.method == "POST" and request.form.get("action") == "add_transaction":
         date_text = request.form.get("date", "")
         category = request.form.get("category", "Other")
@@ -184,7 +240,7 @@ def dashboard():
     return render_template(
         "dashboard.html",
         customers=customers.to_dict("records"),
-        customer=customer.to_dict(),
+        customer=customer if isinstance(customer, dict) else customer.to_dict(),
         income=money(income),
         total_spent=money(total_spent),
         remaining=money(remaining),
@@ -197,7 +253,8 @@ def dashboard():
         goal=goal,
         warning=warning,
         categories=list(BUDGET_RULES.keys())[:-1] + ["Other"],
-        selected_id=selected_id
+        selected_id=selected_id,
+is_new_customer=is_new_customer
     )
 
 if __name__ == "__main__":
