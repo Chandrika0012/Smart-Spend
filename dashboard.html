@@ -48,7 +48,89 @@
 </header>
 
 <div class="container">
+<!-- =====================================================
+         NEW CUSTOMER INPUT
+         ===================================================== -->
 
+    <div class="panel">
+        <h2>New Customer Analysis</h2>
+
+        <p>
+            Enter any customer details to generate
+            a dynamic Smart Spend analysis.
+        </p>
+
+        <form method="POST">
+
+            <input
+                type="hidden"
+                name="action"
+                value="new_customer"
+            >
+
+            <div class="form-row">
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Enter name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Age</label>
+                    <input
+                        type="number"
+                        name="age"
+                        min="1"
+                        placeholder="Enter age"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Occupation</label>
+                    <input
+                        type="text"
+                        name="occupation"
+                        placeholder="Enter occupation"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Monthly Income</label>
+                    <input
+                        type="number"
+                        name="income"
+                        min="1"
+                        step="0.01"
+                        placeholder="Enter income"
+                        required
+                    >
+                </div>
+
+                <button type="submit">
+                    Generate Dashboard
+                </button>
+
+            </div>
+
+        </form>
+    </div>
+
+    {% if is_new_customer %}
+    <div class="success">
+        <strong>New customer analysis generated.</strong>
+        <br>
+        Spending shown for this customer is a projected
+        spending pattern based on the existing dataset
+        and the entered income.
+    </div>
+    {% endif %}
     <div class="panel">
         <form method="GET" class="selector">
             <div>
